@@ -168,6 +168,18 @@
             box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light);
             transition: background-color var(--transition-speed-med) ease, box-shadow var(--transition-speed-med) ease;
         }
+        
+        /* New Style for Cache Status Message */
+        #cache-status {
+            background-color: var(--accent-color);
+            color: var(--accent-color-text);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-small);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
 
         /*
         --------------------------------------------------
@@ -841,8 +853,8 @@
     </nav>
 
     <div class="main-container">
-        <!-- PROFILE CARD -->
         <div class="card" id="profile-card-container">
+            <div id="cache-status" class="hidden"></div>
             <div class="loading-spinner" id="profile-loader"></div>
             <div id="profile-card" class="hidden">
             <div class="profile-details">
@@ -861,7 +873,6 @@
             <div id="profile-error" class="hidden errorMessage"></div>
         </div>
 
-        <!-- REPOSITORIES SECTION -->
         <div class="card" id="repo-section">
             <div class="repo-section-header">
                 <h1>My GitHub Projects</h1>
@@ -896,11 +907,10 @@
 
             <div id="repoList" class="grid-view"></div>
             <div id="loading" class="loading-spinner"></div>
-            <div class="hidden errorMessage"></div>
+            <div id="repo-error" class="hidden errorMessage"></div>
             <p id="noResults" class="hidden">No repositories found matching your criteria.</p>
         </div>
         
-        <!-- CONTACT CARD -->
         <div class="card" id="contact-card">
             <h2>My Socials</h2>
             <p>You can find me on these platforms:</p>
@@ -935,9 +945,16 @@
             "Kotlin": "#F18E33", "Rust": "#dea584", "Dart": "#00B4AB", "Other": "#ededed"
         };
 
+        const CACHE_KEYS = {
+            PROFILE: 'github_profile_cache',
+            REPOS: 'github_repos_cache',
+            TIMESTAMP: 'github_cache_timestamp'
+        };
+
         // --- DOM ELEMENT CACHE ---
         const dom = {
             themeSwitcher: document.getElementById('theme-switcher'),
+            cacheStatus: document.getElementById('cache-status'),
             profileLoader: document.getElementById('profile-loader'),
             profileCard: document.getElementById('profile-card'),
             profileError: document.getElementById('profile-error'),
@@ -953,7 +970,7 @@
             langList: document.getElementById('language-list'),
             repoList: document.getElementById('repoList'),
             loadingSpinner: document.getElementById('loading'),
-            errorMessage: document.getElementById('errorMessage'),
+            repoError: document.getElementById('repo-error'),
             noResults: document.getElementById('noResults'),
             contactGithub: document.getElementById('contact-github'),
             contactDiscord: document.getElementById('contact-discord'),
@@ -974,18 +991,30 @@
             currentLayout: 'grid'
         };
 
-        // --- API & DATA FETCHING ---
+        // --- CACHE HELPERS ---
+        function setCache(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (e) {
+                console.error('Failed to save to cache:', e);
+            }
+        }
 
-        /**
-         * Fetches data from the GitHub API with error handling for rate limits.
-         * @param {string} url - The API endpoint to fetch.
-         * @param {object} options - Optional fetch options.
-         * @param {boolean} isJson - Whether to parse the response as JSON.
-         * @returns {Promise<any>} - The fetched data.
-         */
+        function getCache(key) {
+            try {
+                const value = localStorage.getItem(key);
+                return value ? JSON.parse(value) : null;
+            } catch (e) {
+                console.error('Failed to read from cache:', e);
+                localStorage.removeItem(key); // Remove corrupted item on parsing error
+                return null;
+            }
+        }
+
+        // --- API & DATA FETCHING ---
         async function fetchGitHubAPI(url, options = {}, isJson = true) {
             const response = await fetch(url, options);
-            if (response.status === 403) {
+            if (response.status === 403 || response.status === 429) {
                 const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
                 if (rateLimitRemaining === '0') {
                     const resetTime = new Date(parseInt(response.headers.get('X-RateLimit-Reset')) * 1000);
@@ -993,59 +1022,21 @@
                     throw new Error(`GitHub API rate limit exceeded. Please wait ~${minutesToWait} minute(s).`);
                 }
             }
-            if (!response.ok) throw new Error(`API Error (${response.status})`);
+            if (!response.ok) throw new Error(`API Error: ${response.statusText} (${response.status})`);
             return isJson ? response.json() : response.text();
         }
 
-        /**
-         * Fetches and displays the user's GitHub profile information and README.
-         */
-        async function fetchProfileData() {
-            try {
-                const user = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}`);
-                dom.profileImage.src = user.avatar_url;
-                dom.profileName.textContent = user.name || user.login;
-                dom.profileLogin.textContent = `@${user.login}`;
-                dom.profileBio.textContent = user.bio || 'No bio provided.';
-                dom.contactGithub.href = user.html_url;
-                
-                try {
-                    const readmeHtml = await fetchGitHubAPI(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_USERNAME}/readme`, { headers: { 'Accept': 'application/vnd.github.html' } }, false);
-                    dom.profileReadme.innerHTML = readmeHtml;
-                } catch (e) {
-                    dom.profileReadme.innerHTML = '<p>User does not have a profile README.</p>';
-                }
-
-                dom.profileLoader.classList.add('hidden');
-                dom.profileCard.classList.remove('hidden');
-            } catch (error) {
-                dom.profileLoader.classList.add('hidden');
-                dom.profileError.textContent = `Could not load profile: ${error.message}`;
-                dom.profileError.classList.remove('hidden');
-                throw error;
-            }
-        }
-
-        /**
-         * Fetches all repositories for the user, including all languages for each repo.
-         * @returns {Promise<Array>} - A promise that resolves to an array of repository objects.
-         */
-        async function fetchAllRepos() {
-            dom.loadingSpinner.classList.remove('hidden');
+        async function fetchAndProcessAllRepos() {
             const repos = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}/repos?per_page=100`);
             
-            await Promise.all(repos.map(async (repo) => {
+            const processedRepos = await Promise.all(repos.map(async (repo) => {
                 repo.linkUrl = repo.has_pages ? `https://${GITHUB_USERNAME.toLowerCase()}.github.io/${repo.name}/` : repo.html_url;
 
-                // Fetch all languages for the repo
                 try {
                     const languages = await fetchGitHubAPI(repo.languages_url);
                     repo.all_languages = Object.keys(languages);
-                } catch (e) {
-                    repo.all_languages = repo.language ? [repo.language] : [];
-                }
+                } catch (e) { repo.all_languages = repo.language ? [repo.language] : []; }
 
-                // Fetch preview image from README if available
                 if (!repo.has_pages) {
                     try {
                         const readmeContent = await fetchGitHubAPI(repo.url + '/readme');
@@ -1060,23 +1051,36 @@
                                     imgUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${repo.name}/${branch}/${imgUrl}`;
                                 }
                                 repo.previewImageUrl = imgUrl;
-                            } else {
-                                repo.previewImageUrl = null;
                             }
-                        } else {
-                            repo.previewImageUrl = null;
                         }
                     } catch (e) { repo.previewImageUrl = null; }
                 }
+                return repo;
             }));
-            return repos;
+            return processedRepos;
+        }
+
+        async function fetchProfileReadme() {
+            try {
+                const readmeHtml = await fetchGitHubAPI(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_USERNAME}/readme`, { headers: { 'Accept': 'application/vnd.github.html' } }, false);
+                dom.profileReadme.innerHTML = readmeHtml;
+            } catch (e) {
+                console.warn("Could not fetch profile README.", e);
+                dom.profileReadme.innerHTML = '<p>This user does not have a profile README.</p>';
+            }
         }
 
         // --- UI RENDERING ---
 
-        /**
-         * Renders the list of filterable languages in the dropdown.
-         */
+        function renderProfile(user) {
+            dom.profileImage.src = user.avatar_url;
+            dom.profileName.textContent = user.name || user.login;
+            dom.profileLogin.textContent = `@${user.login}`;
+            dom.profileBio.textContent = user.bio || 'No bio provided.';
+            dom.contactGithub.href = user.html_url;
+            dom.profileCard.classList.remove('hidden');
+        }
+
         function renderLanguageList() {
             const searchTerm = dom.langSearch.value.toLowerCase();
             const allLangs = new Set(state.allRepos.flatMap(r => r.all_languages).filter(Boolean));
@@ -1100,10 +1104,6 @@
             });
         }
 
-        /**
-         * Displays the repositories on the page based on the provided array.
-         * @param {Array} repos - The array of repository objects to display.
-         */
         function displayRepositories(repos) {
             dom.repoList.innerHTML = '';
             dom.noResults.classList.toggle('hidden', repos.length > 0);
@@ -1121,11 +1121,13 @@
                 } else if (repo.previewImageUrl) {
                     previewImageUrl = repo.previewImageUrl;
                 } else {
-                    previewImageUrl = `https://placehold.co/600x400/${getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim().substring(1)}/${getComputedStyle(document.documentElement).getPropertyValue('--text-color-primary').trim().substring(1)}?text=No+Preview&font=inter`;
+                    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim().substring(1);
+                    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color-primary').trim().substring(1);
+                    previewImageUrl = `https://placehold.co/600x400/${bgColor}/${textColor}?text=No+Preview&font=inter`;
                 }
 
                 cardLink.innerHTML = `
-                    <img src="${previewImageUrl}" alt="${repo.name} preview" class="repo-preview-image" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/600x400/${getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim().substring(1)}/${getComputedStyle(document.documentElement).getPropertyValue('--text-color-primary').trim().substring(1)}?text=Preview+Error&font=inter';">
+                    <img src="${previewImageUrl}" alt="${repo.name} preview" class="repo-preview-image" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e4e4f1/3a3a5a?text=Preview+Error&font=inter';">
                     <div class="repo-card-content">
                         <h3 class="repo-name">${repo.name}</h3>
                         <p class="repo-description">${repo.description || 'No description.'}</p>
@@ -1139,9 +1141,6 @@
             });
         }
         
-        /**
-         * Filters, sorts, and displays repositories based on current state.
-         */
         function updateAndDisplay() {
             if (!state.allRepos) return;
             
@@ -1160,9 +1159,6 @@
             displayRepositories(filteredRepos);
         }
 
-        /**
-         * Shows the currently active language filter tag.
-         */
         function displayActiveFilter() {
             dom.activeFilterContainer.innerHTML = '';
             if (!state.activeLangFilter) return;
@@ -1180,21 +1176,14 @@
             dom.activeFilterContainer.appendChild(tag);
         }
 
-        /**
-         * Updates the active state of sort and layout control buttons.
-         */
         function updateControlButtons() {
             ['name', 'created', 'updated'].forEach(s => {
                 const btnKey = `sort${s.charAt(0).toUpperCase() + s.slice(1)}Btn`;
-                if (dom[btnKey]) {
-                    dom[btnKey].classList.toggle('active', state.currentSort === s);
-                }
+                dom[btnKey]?.classList.toggle('active', state.currentSort === s);
             });
             ['grid', 'list'].forEach(l => {
                 const btnKey = `layout${l.charAt(0).toUpperCase() + l.slice(1)}Btn`;
-                if (dom[btnKey]) {
-                    dom[btnKey].classList.toggle('active', state.currentLayout === l);
-                }
+                dom[btnKey]?.classList.toggle('active', state.currentLayout === l);
             });
             dom.repoList.className = state.currentLayout === 'grid' ? 'grid-view' : 'list-view';
         }
@@ -1205,9 +1194,9 @@
         function setLayout(type) { state.currentLayout = type; updateAndDisplay(); }
 
         function handleThemeToggle() {
-            const isDark = document.documentElement.classList.contains('dark-theme');
-            document.documentElement.className = isDark ? 'light-theme' : 'dark-theme';
-            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            const isDark = document.documentElement.classList.toggle('dark-theme');
+            document.documentElement.classList.toggle('light-theme', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
             updateAndDisplay();
         }
 
@@ -1215,30 +1204,69 @@
             dom.langDropdown.classList.toggle('open');
             if (dom.langDropdown.classList.contains('open')) dom.langSearch.focus();
         }
-
-        /**
-         * Main function to load all necessary data and initialize the page.
-         */
-        async function loadAllData() {
-            try {
-                await fetchProfileData();
-                state.allRepos = await fetchAllRepos();
-                renderLanguageList();
-                updateAndDisplay();
-            } catch (error) {
-                console.error("Failed to load page data:", error);
-                dom.errorMessage.textContent = error.message;
-                dom.errorMessage.classList.remove('hidden');
-            } finally {
-                dom.loadingSpinner.classList.add('hidden');
-                dom.profileLoader.classList.add('hidden');
-            }
+        
+        function displayCacheMessage(isoTimestamp) {
+            const date = new Date(isoTimestamp);
+            dom.cacheStatus.innerHTML = `API limit likely reached. Showing cached data from ${date.toLocaleString()}.`;
+            dom.cacheStatus.classList.remove('hidden');
         }
 
-        /**
-         * Initializes the application, sets up event listeners, and loads data.
-         */
+        function displayFatalError(error) {
+            const errorText = `Could not load data: ${error.message}. No cached version available.`;
+            dom.profileError.textContent = errorText;
+            dom.repoError.textContent = errorText;
+            dom.profileError.classList.remove('hidden');
+            dom.repoError.classList.remove('hidden');
+        }
+
+        function renderPageFromData(profileData, reposData) {
+            // Render profile and repos
+            renderProfile(profileData);
+            fetchProfileReadme(); // Fetch live README regardless
+            state.allRepos = reposData;
+            
+            // Initialize repo filters and display
+            renderLanguageList();
+            updateAndDisplay();
+        }
+        
+        async function initializePage() {
+            try {
+                // Try to fetch fresh data first
+                console.log("Attempting to fetch fresh data from GitHub...");
+                const profileData = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}`);
+                const reposData = await fetchAndProcessAllRepos();
+                
+                renderPageFromData(profileData, reposData);
+                setCache(CACHE_KEYS.PROFILE, profileData);
+                setCache(CACHE_KEYS.REPOS, reposData);
+                setCache(CACHE_KEYS.TIMESTAMP, new Date().toISOString());
+                console.log("Fresh data loaded and cached successfully.");
+
+            } catch (error) {
+                console.warn("Failed to fetch fresh data:", error.message);
+                console.log("Attempting to load data from cache...");
+
+                const cachedProfile = getCache(CACHE_KEYS.PROFILE);
+                const cachedRepos = getCache(CACHE_KEYS.REPOS);
+
+                if (cachedProfile && cachedRepos) {
+                    renderPageFromData(cachedProfile, cachedRepos);
+                    const cachedTimestamp = getCache(CACHE_KEYS.TIMESTAMP);
+                    displayCacheMessage(cachedTimestamp);
+                    console.log("Successfully loaded data from cache.");
+                } else {
+                    displayFatalError(error);
+                    console.error("Failed to load data and no cache is available.");
+                }
+            } finally {
+                dom.profileLoader.classList.add('hidden');
+                dom.loadingSpinner.classList.add('hidden');
+            }
+        }
+        
         function init() {
+            // Set theme from localStorage
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.className = `${savedTheme}-theme`;
 
@@ -1260,19 +1288,15 @@
             dom.layoutGridBtn.addEventListener('click', () => setLayout('grid'));
             dom.layoutListBtn.addEventListener('click', () => setLayout('list'));
             
-            // Event delegation for clickable language tags on repo cards
             dom.repoList.addEventListener('click', e => {
                 if (e.target.classList.contains('repo-language-tag')) {
-                    e.preventDefault(); // Prevent card link navigation
-                    e.stopPropagation(); // Stop event bubbling
-                    const lang = e.target.dataset.lang;
-                    state.activeLangFilter = lang;
+                    e.preventDefault(); e.stopPropagation();
+                    state.activeLangFilter = e.target.dataset.lang;
                     updateAndDisplay();
                     document.getElementById('repo-section').scrollIntoView({ behavior: 'smooth' });
                 }
             });
 
-            // Gradient hover effect
             document.body.addEventListener('mousemove', e => {
                 const hoverElement = e.target.closest('.has-gradient-hover');
                 if (hoverElement) {
@@ -1282,10 +1306,8 @@
                 }
             });
             
-            // Discord ID copy functionality
             dom.contactDiscord.addEventListener('click', (e) => {
                 e.preventDefault();
-                // Using document.execCommand as a fallback for iframe environments
                 const textArea = document.createElement("textarea");
                 textArea.value = 'AJelTaco';
                 document.body.appendChild(textArea);
@@ -1295,26 +1317,20 @@
                     const feedback = e.currentTarget.querySelector('.copy-feedback');
                     feedback.classList.add('show');
                     setTimeout(() => feedback.classList.remove('show'), 1500);
-                } catch (err) {
-                    console.error('Fallback: Oops, unable to copy', err);
-                }
+                } catch (err) { console.error('Fallback: Oops, unable to copy', err); }
                 document.body.removeChild(textArea);
             });
 
-            // Smooth scrolling for nav links
             dom.navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     const targetId = this.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        targetElement.scrollIntoView({ behavior: 'smooth' });
-                    }
+                    document.querySelector(targetId)?.scrollIntoView({ behavior: 'smooth' });
                 });
             });
 
             // --- Load Initial Data ---
-            loadAllData();
+            initializePage();
         }
 
         document.addEventListener('DOMContentLoaded', init);
