@@ -267,13 +267,17 @@
             display: flex;
             gap: 2rem;
             align-items: flex-start;
-            flex-direction: column; 
-            align-items: center; 
-            text-align: center; 
+            flex-direction: column;
+            text-align: left;
+            padding: 1.5rem;
+            flex-direction: row;       
         }
 
         .profile-image-container {
             flex-shrink: 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
         }
 
         .profile-image {
@@ -287,6 +291,16 @@
         .profile-details {
             text-align: left;
             flex-grow: 1;
+            width: 100%;
+            flex-direction: row;
+            width: auto;
+        }
+
+        .profile-readme-container {
+            flex-grow: 1;
+            width: 100%;
+            margin-left: 3rem;
+            margin-right: 2rem;
         }
 
         .profile-name {
@@ -307,6 +321,13 @@
             text-align: left;
         }
         
+        .profile-readme-container {
+            flex-grow: 1;
+            width: 100%;
+            margin-left: 0rem;
+            margin-right: 0rem;
+        }
+
         #profile-readme {
             margin-left: 0; 
             margin-right: 0; 
@@ -318,6 +339,7 @@
             padding: 1.5rem;
             border-radius: var(--border-radius-small);
             box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            max-width: 100%;
         }
         
         #profile-readme img {
@@ -573,7 +595,7 @@
         }
 
         #repoList.grid-view {
-             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
         }
 
         .repo-card-link {
@@ -743,7 +765,7 @@
         */
         .hidden { display: none; }
         
-        .loading-spinner, #errorMessage, #noResults {
+        .loading-spinner, .errorMessage, #noResults {
             grid-column: 1 / -1;
             text-align: center;
             margin-top: 2rem;
@@ -754,7 +776,7 @@
             margin-left: 0;
         }
 
-        #errorMessage {
+        .errorMessage {
             color: var(--color-danger);
             font-weight: 600;
             background-color: var(--bg-color);
@@ -783,19 +805,9 @@
             .nav-links { order: 1; margin-left: 0; justify-content: flex-start; }
             .nav-links a { padding: 0.5rem; }
             #profile-card { flex-direction: column; align-items: center; text-align: center; }
-            #profile-readme { margin-left: 0; margin-right: 0; }
-            .profile-details { text-align: center; }
-            .search-filter-row { flex-direction: row; }
-            .active-filters-and-view-controls { flex-direction: column; gap: 1rem; }
-            .view-controls {
-                width: 18rem;
-                justify-content: center;
-            }
-            .view-controls #layout-grid-btn,
-            .view-controls #layout-list-btn,
-            .view-controls span {
-                display: none;
-            }
+            #profile-name { text-align: center; }
+            #profile-bio { text-align: center; }
+            #profile-login { text-align: center; }
         }
 
         #that-one-span {
@@ -827,19 +839,20 @@
         <div class="card" id="profile-card-container">
             <div class="loading-spinner" id="profile-loader"></div>
             <div id="profile-card" class="hidden">
+            <div class="profile-details">
                 <div class="profile-image-container">
                     <img id="profile-image" src="blank" alt="GitHub Profile Picture" class="profile-image"/>
                 </div>
-                <div class="profile-details">
                     <h2 id="profile-name" class="profile-name"></h2>
                     <p id="profile-login" class="profile-login"></p>
                     <p id="profile-bio" class="profile-bio"></p>
+            </div>
+                <div class="profile-readme-container">
                     <div id="profile-readme"></div>
-                    <p>This website is mostly AI generated, but once I learn enough my goal is to recreate this website from scratch without any help from AI. </p>
                 </div>
             </div>
-            
-            <div id="profile-error" class="hidden"></div>
+            <p>This website is mostly AI generated, but once I learn enough my goal is to recreate this website from scratch without any help from AI. </p>
+            <div id="profile-error" class="hidden errorMessage"></div>
         </div>
 
         <!-- REPOSITORIES SECTION -->
@@ -877,7 +890,7 @@
 
             <div id="repoList" class="grid-view"></div>
             <div id="loading" class="loading-spinner"></div>
-            <div id="errorMessage" class="hidden"></div>
+            <div class="hidden errorMessage"></div>
             <p id="noResults" class="hidden">No repositories found matching your criteria.</p>
         </div>
         
