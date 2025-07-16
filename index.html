@@ -132,6 +132,7 @@
 
         p {
             margin-top: 20px;
+            margin-bottom: 10px;
             text-align: center;
         }
 
@@ -266,6 +267,9 @@
             display: flex;
             gap: 2rem;
             align-items: flex-start;
+            flex-direction: column; 
+            align-items: center; 
+            text-align: center; 
         }
 
         .profile-image-container {
@@ -304,6 +308,8 @@
         }
         
         #profile-readme {
+            margin-left: 0; 
+            margin-right: 0; 
             margin-top: 1rem;
             padding-top: 1rem;
             border-top: 2px solid var(--bg-color);
@@ -664,8 +670,8 @@
         }
 
         .repo-language-tag:hover {
-             color: var(--accent-color);
-             box-shadow: inset 1px 1px 2px var(--shadow-dark), inset -1px -1px 2px var(--shadow-light);
+            color: var(--accent-color);
+            box-shadow: inset 1px 1px 2px var(--shadow-dark), inset -1px -1px 2px var(--shadow-light);
         }
         
         /*
@@ -742,6 +748,10 @@
             text-align: center;
             margin-top: 2rem;
             color: var(--text-color-secondary);
+        }
+
+        #noResults {
+            margin-left: 0;
         }
 
         #errorMessage {
@@ -825,9 +835,10 @@
                     <p id="profile-login" class="profile-login"></p>
                     <p id="profile-bio" class="profile-bio"></p>
                     <div id="profile-readme"></div>
+                    <p>This website is mostly AI generated, but once I learn enough my goal is to recreate this website from scratch without any help from AI. </p>
                 </div>
             </div>
-            <p>This website is mostly AI generated, but once I learn enough my goal is to recreate this website from scratch without any help from AI. </p>
+            
             <div id="profile-error" class="hidden"></div>
         </div>
 
