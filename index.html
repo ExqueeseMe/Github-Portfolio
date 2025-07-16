@@ -276,8 +276,8 @@
         .profile-image-container {
             flex-shrink: 0;
             display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
+            align-items: center;
+            justify-content: center;
         }
 
         .profile-image {
@@ -317,7 +317,7 @@
         }
 
         .profile-bio {
-            margin-bottom: 1.5rem;
+            margin-bottom: 0rem;
             text-align: left;
         }
         
@@ -331,7 +331,7 @@
         #profile-readme {
             margin-left: 0; 
             margin-right: 0; 
-            margin-top: 1rem;
+            margin-top: 0rem;
             padding-top: 1rem;
             border-top: 2px solid var(--bg-color);
             text-align: left;
@@ -808,6 +808,12 @@
             #profile-name { text-align: center; }
             #profile-bio { text-align: center; }
             #profile-login { text-align: center; }
+            #layout-grid-btn, #layout-list-btn, #that-one-span {
+                display: none;
+            }
+            .view-controls {
+                margin: auto;
+            }
         }
 
         #that-one-span {
@@ -919,6 +925,7 @@
     </div>
 
     <script>
+        // --- CONFIGURATION ---
         const GITHUB_USERNAME = 'Exqueeseme';
         
         const LANGUAGE_COLORS = {
@@ -928,6 +935,7 @@
             "Kotlin": "#F18E33", "Rust": "#dea584", "Dart": "#00B4AB", "Other": "#ededed"
         };
 
+        // --- DOM ELEMENT CACHE ---
         const dom = {
             themeSwitcher: document.getElementById('theme-switcher'),
             profileLoader: document.getElementById('profile-loader'),
@@ -958,6 +966,7 @@
             navLinks: document.querySelectorAll('.nav-links a')
         };
 
+        // --- APPLICATION STATE ---
         let state = {
             allRepos: [],
             activeLangFilter: null,
@@ -965,6 +974,15 @@
             currentLayout: 'grid'
         };
 
+        // --- API & DATA FETCHING ---
+
+        /**
+         * Fetches data from the GitHub API with error handling for rate limits.
+         * @param {string} url - The API endpoint to fetch.
+         * @param {object} options - Optional fetch options.
+         * @param {boolean} isJson - Whether to parse the response as JSON.
+         * @returns {Promise<any>} - The fetched data.
+         */
         async function fetchGitHubAPI(url, options = {}, isJson = true) {
             const response = await fetch(url, options);
             if (response.status === 403) {
@@ -979,6 +997,9 @@
             return isJson ? response.json() : response.text();
         }
 
+        /**
+         * Fetches and displays the user's GitHub profile information and README.
+         */
         async function fetchProfileData() {
             try {
                 const user = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}`);
@@ -987,12 +1008,14 @@
                 dom.profileLogin.textContent = `@${user.login}`;
                 dom.profileBio.textContent = user.bio || 'No bio provided.';
                 dom.contactGithub.href = user.html_url;
+                
                 try {
                     const readmeHtml = await fetchGitHubAPI(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_USERNAME}/readme`, { headers: { 'Accept': 'application/vnd.github.html' } }, false);
                     dom.profileReadme.innerHTML = readmeHtml;
                 } catch (e) {
                     dom.profileReadme.innerHTML = '<p>User does not have a profile README.</p>';
                 }
+
                 dom.profileLoader.classList.add('hidden');
                 dom.profileCard.classList.remove('hidden');
             } catch (error) {
@@ -1003,11 +1026,26 @@
             }
         }
 
+        /**
+         * Fetches all repositories for the user, including all languages for each repo.
+         * @returns {Promise<Array>} - A promise that resolves to an array of repository objects.
+         */
         async function fetchAllRepos() {
             dom.loadingSpinner.classList.remove('hidden');
             const repos = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}/repos?per_page=100`);
+            
             await Promise.all(repos.map(async (repo) => {
                 repo.linkUrl = repo.has_pages ? `https://${GITHUB_USERNAME.toLowerCase()}.github.io/${repo.name}/` : repo.html_url;
+
+                // Fetch all languages for the repo
+                try {
+                    const languages = await fetchGitHubAPI(repo.languages_url);
+                    repo.all_languages = Object.keys(languages);
+                } catch (e) {
+                    repo.all_languages = repo.language ? [repo.language] : [];
+                }
+
+                // Fetch preview image from README if available
                 if (!repo.has_pages) {
                     try {
                         const readmeContent = await fetchGitHubAPI(repo.url + '/readme');
@@ -1016,11 +1054,8 @@
                             const firstImageMatch = decodedContent.match(/!\[.*?\]\((.*?)\)/);
                             let imgUrl = firstImageMatch ? firstImageMatch[1] : null;
                             if (imgUrl) {
-                                // If relative path, convert to raw.githubusercontent.com URL
                                 if (!/^https?:\/\//i.test(imgUrl)) {
-                                    // Get default branch (main/master)
                                     const branch = repo.default_branch || 'main';
-                                    // Remove leading './' or '/'
                                     imgUrl = imgUrl.replace(/^\.\//, '').replace(/^\/+/, '');
                                     imgUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${repo.name}/${branch}/${imgUrl}`;
                                 }
@@ -1037,28 +1072,42 @@
             return repos;
         }
 
+        // --- UI RENDERING ---
+
+        /**
+         * Renders the list of filterable languages in the dropdown.
+         */
         function renderLanguageList() {
             const searchTerm = dom.langSearch.value.toLowerCase();
-            const allLangs = new Set(state.allRepos.flatMap(r => r.language).filter(Boolean));
+            const allLangs = new Set(state.allRepos.flatMap(r => r.all_languages).filter(Boolean));
             const filteredLangs = [...allLangs].filter(lang => lang.toLowerCase().includes(searchTerm)).sort();
+            
             dom.langList.innerHTML = '';
             filteredLangs.forEach(lang => {
                 const item = document.createElement('div');
                 item.className = 'language-item has-gradient-hover';
                 item.onclick = () => { state.activeLangFilter = lang; dom.langDropdown.classList.remove('open'); updateAndDisplay(); };
+                
                 const dot = document.createElement('div');
                 dot.className = 'language-color-dot';
                 dot.style.backgroundColor = LANGUAGE_COLORS[lang] || LANGUAGE_COLORS['Other'];
+                
                 const name = document.createElement('span');
                 name.textContent = lang;
+                
                 item.append(dot, name);
                 dom.langList.appendChild(item);
             });
         }
 
+        /**
+         * Displays the repositories on the page based on the provided array.
+         * @param {Array} repos - The array of repository objects to display.
+         */
         function displayRepositories(repos) {
             dom.repoList.innerHTML = '';
             dom.noResults.classList.toggle('hidden', repos.length > 0);
+            
             repos.forEach((repo, index) => {
                 const cardLink = document.createElement('a');
                 cardLink.className = 'repo-card-link has-gradient-hover';
@@ -1081,7 +1130,7 @@
                         <h3 class="repo-name">${repo.name}</h3>
                         <p class="repo-description">${repo.description || 'No description.'}</p>
                         <div class="language-tags-container">
-                            ${repo.language ? `<span class="repo-language-tag" data-lang="${repo.language}">${repo.language}</span>` : ''}
+                            ${(repo.all_languages && repo.all_languages.length > 0) ? repo.all_languages.map(lang => `<span class="repo-language-tag" data-lang="${lang}">${lang}</span>`).join('') : ''}
                         </div>
                     </div>
                 `;
@@ -1090,12 +1139,16 @@
             });
         }
         
+        /**
+         * Filters, sorts, and displays repositories based on current state.
+         */
         function updateAndDisplay() {
             if (!state.allRepos) return;
+            
             const searchTerm = dom.searchBar.value.toLowerCase();
             let filteredRepos = state.allRepos.filter(repo =>
                 (searchTerm === '' || repo.name.toLowerCase().includes(searchTerm) || (repo.description && repo.description.toLowerCase().includes(searchTerm))) &&
-                (!state.activeLangFilter || repo.language === state.activeLangFilter)
+                (!state.activeLangFilter || (repo.all_languages && repo.all_languages.includes(state.activeLangFilter)))
             );
 
             if (state.currentSort === 'name') filteredRepos.sort((a, b) => a.name.localeCompare(b.name));
@@ -1107,20 +1160,29 @@
             displayRepositories(filteredRepos);
         }
 
+        /**
+         * Shows the currently active language filter tag.
+         */
         function displayActiveFilter() {
             dom.activeFilterContainer.innerHTML = '';
             if (!state.activeLangFilter) return;
+            
             const tag = document.createElement('div');
             tag.className = 'active-filter-tag';
             tag.textContent = state.activeLangFilter;
+            
             const remove = document.createElement('span');
             remove.className = 'remove-filter-icon';
             remove.innerHTML = `&times;`;
             remove.onclick = (e) => { e.stopPropagation(); state.activeLangFilter = null; updateAndDisplay(); };
+            
             tag.appendChild(remove);
             dom.activeFilterContainer.appendChild(tag);
         }
 
+        /**
+         * Updates the active state of sort and layout control buttons.
+         */
         function updateControlButtons() {
             ['name', 'created', 'updated'].forEach(s => {
                 const btnKey = `sort${s.charAt(0).toUpperCase() + s.slice(1)}Btn`;
@@ -1137,6 +1199,8 @@
             dom.repoList.className = state.currentLayout === 'grid' ? 'grid-view' : 'list-view';
         }
         
+        // --- EVENT HANDLERS & INITIALIZATION ---
+        
         function setSort(type) { state.currentSort = type; updateAndDisplay(); }
         function setLayout(type) { state.currentLayout = type; updateAndDisplay(); }
 
@@ -1152,6 +1216,9 @@
             if (dom.langDropdown.classList.contains('open')) dom.langSearch.focus();
         }
 
+        /**
+         * Main function to load all necessary data and initialize the page.
+         */
         async function loadAllData() {
             try {
                 await fetchProfileData();
@@ -1168,10 +1235,14 @@
             }
         }
 
+        /**
+         * Initializes the application, sets up event listeners, and loads data.
+         */
         function init() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.className = `${savedTheme}-theme`;
 
+            // --- Event Listeners ---
             dom.themeSwitcher.addEventListener('click', handleThemeToggle);
             dom.searchBar.addEventListener('input', () => updateAndDisplay());
             dom.langFilterBtn.addEventListener('click', toggleLanguageDropdown);
@@ -1189,38 +1260,64 @@
             dom.layoutGridBtn.addEventListener('click', () => setLayout('grid'));
             dom.layoutListBtn.addEventListener('click', () => setLayout('list'));
             
-            dom.repoList.addEventListener('mousemove', e => {
-                const card = e.target.closest('.has-gradient-hover');
-                if (card) {
-                    const rect = card.getBoundingClientRect();
-                    card.style.setProperty('--x', `${e.clientX - rect.left}px`);
-                    card.style.setProperty('--y', `${e.clientY - rect.top}px`);
+            // Event delegation for clickable language tags on repo cards
+            dom.repoList.addEventListener('click', e => {
+                if (e.target.classList.contains('repo-language-tag')) {
+                    e.preventDefault(); // Prevent card link navigation
+                    e.stopPropagation(); // Stop event bubbling
+                    const lang = e.target.dataset.lang;
+                    state.activeLangFilter = lang;
+                    updateAndDisplay();
+                    document.getElementById('repo-section').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            // Gradient hover effect
+            document.body.addEventListener('mousemove', e => {
+                const hoverElement = e.target.closest('.has-gradient-hover');
+                if (hoverElement) {
+                    const rect = hoverElement.getBoundingClientRect();
+                    hoverElement.style.setProperty('--x', `${e.clientX - rect.left}px`);
+                    hoverElement.style.setProperty('--y', `${e.clientY - rect.top}px`);
                 }
             });
             
+            // Discord ID copy functionality
             dom.contactDiscord.addEventListener('click', (e) => {
                 e.preventDefault();
-                navigator.clipboard.writeText('AJelTaco');
-                const feedback = e.currentTarget.querySelector('.copy-feedback');
-                feedback.classList.add('show');
-                setTimeout(() => feedback.classList.remove('show'), 1500);
+                // Using document.execCommand as a fallback for iframe environments
+                const textArea = document.createElement("textarea");
+                textArea.value = 'AJelTaco';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const feedback = e.currentTarget.querySelector('.copy-feedback');
+                    feedback.classList.add('show');
+                    setTimeout(() => feedback.classList.remove('show'), 1500);
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                }
+                document.body.removeChild(textArea);
             });
 
+            // Smooth scrolling for nav links
             dom.navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     const targetId = this.getAttribute('href');
-                    document.querySelector(targetId).scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }
                 });
             });
 
+            // --- Load Initial Data ---
             loadAllData();
         }
 
         document.addEventListener('DOMContentLoaded', init);
     </script>
-<!-- Long comment for no reason it's just here because it's just here, theres no reason. Yep, actually its here because i want github to push the page changes i made because it doesnt want to. -->
 </body>
 </html>
