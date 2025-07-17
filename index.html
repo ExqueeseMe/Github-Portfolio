@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en" class="light-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Portfolio</title>
+    <style>
+        /*
+        ==========================================================================
+        NEOMORPHIC PORTFOLIO UI - V3 - EXTENSIVE OVERHAUL
+        ==========================================================================
+        */
+
+        /*
+        --------------------------------------------------
+        1. ROOT & THEME VARIABLES
+        --------------------------------------------------
+        */
+        :root {
+            --transition-speed-fast: 0.2s;
+            --transition-speed-med: 0.4s;
+            --transition-speed-slow: 0.6s;
+            --border-radius-main: 1.5rem;
+            --border-radius-small: 1rem;
+            --font-main: 'Inter', sans-serif;
+            --nav-height: 70px;
+        }
+
+        .light-theme {
+            --bg-color: #e4e4f1;
+            --bg-color-container: #efeff8;
+            --text-color-primary: #3a3a5a;
+            --text-color-secondary: #6a6a8a;
+            --accent-color: #6d5edc;
+            --accent-color-hover: #5b4acb;
+            --accent-color-text: #ffffff;
+            --shadow-light: #ffffff;
+            --shadow-dark: #c0c0d3;
+            --shadow-inset-dark: #d0d0e3;
+            --shadow-inset-light: #ffffff;
+            --color-danger: #e74c3c;
+            --color-success: #2ecc71;
+            --scrollbar-thumb: #c0c0d3;
+            --scrollbar-track: #e4e4f1;
+            --blob-opacity: 0.4;
+            --nav-bg: rgba(239, 239, 248, 0.8);
+            --gradient-hover-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .dark-theme {
+            --bg-color: #2a2a3e;
+            --bg-color-container: #313148;
+            --text-color-primary: #e4e4f1;
+            --text-color-secondary: #a0a0c0;
+            --accent-color: #8a7efc;
+            --accent-color-hover: #a094fc;
+            --accent-color-text: #ffffff;
+            --shadow-light: #3a3a52;
+            --shadow-dark: #1e1e2c;
+            --shadow-inset-dark: #252538;
+            --shadow-inset-light: #393952;
+            --color-danger: #f55f4e;
+            --color-success: #3efc85;
+            --scrollbar-thumb: #4a4a68;
+            --scrollbar-track: #2a2a3e;
+            --blob-opacity: 0.2;
+            --nav-bg: rgba(49, 49, 72, 0.8);
+            --gradient-hover-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+        /*
+        --------------------------------------------------
+        2. BASE & BODY STYLES
+        --------------------------------------------------
+        */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            height: 100%;
+            scroll-behavior: smooth;
+            scroll-padding-top: calc(var(--nav-height) + 1rem);
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color-primary);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100%;
+            padding: 2rem;
+            line-height: 1.6;
+            transition: background-color var(--transition-speed-med) ease, color var(--transition-speed-med) ease;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background Blobs */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            z-index: -1;
+            border-radius: 50%;
+            filter: blur(100px);
+            transition: opacity var(--transition-speed-med) ease;
+        }
+
+        body::before {
+            background: linear-gradient(to right, var(--accent-color), #ff7e5f);
+            width: 400px;
+            height: 400px;
+            top: -100px;
+            left: -100px;
+            animation: animate-blob-1 20s infinite alternate;
+        }
+
+        body::after {
+            background: linear-gradient(to right, #00c6ff, var(--accent-color));
+            width: 500px;
+            height: 500px;
+            bottom: -150px;
+            right: -150px;
+            animation: animate-blob-2 25s infinite alternate;
+        }
+
+        p {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        @keyframes animate-blob-1 {
+            0% { transform: translate(-20%, 20%) scale(0.9); opacity: var(--blob-opacity); }
+            50% { transform: scale(1.1); opacity: calc(var(--blob-opacity) * 1.5); }
+            100% { transform: translate(20%, -20%) scale(0.9); opacity: var(--blob-opacity); }
+        }
+        @keyframes animate-blob-2 {
+            0% { transform: translate(20%, -20%) scale(0.9); opacity: var(--blob-opacity); }
+            50% { transform: scale(1.1); opacity: calc(var(--blob-opacity) * 1.5); }
+            100% { transform: translate(-20%, 20%) scale(0.9); opacity: var(--blob-opacity); }
+        }
+
+        /*
+        --------------------------------------------------
+        3. MAIN LAYOUT & CONTAINER
+        --------------------------------------------------
+        */
+        .main-container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding-top: var(--nav-height);
+        }
+
+        .card {
+            background-color: var(--bg-color-container);
+            border-radius: var(--border-radius-main);
+            padding: 2rem;
+            box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light);
+            transition: background-color var(--transition-speed-med) ease, box-shadow var(--transition-speed-med) ease;
+        }
+        
+        /* New Style for Cache Status Message */
+        #cache-status {
+            background-color: var(--accent-color);
+            color: var(--accent-color-text);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-small);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /*
+        --------------------------------------------------
+        4. STICKY NAVIGATION BAR
+        --------------------------------------------------
+        */
+        .page-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--nav-bg);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+            transition: background-color var(--transition-speed-med) ease;
+        }
+
+        .nav-content {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-color-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-small);
+            transition: color var(--transition-speed-fast) ease, background-color var(--transition-speed-fast) ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--accent-color);
+            background-color: var(--bg-color);
+        }
+        
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .theme-label {
+            font-weight: 600;
+            color: var(--text-color-secondary);
+            transition: color var(--transition-speed-med) ease;
+        }
+
+        .theme-toggle {
+            width: 50px;
+            height: 26px;
+            background-color: var(--bg-color);
+            border-radius: 13px;
+            position: relative;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+        }
+
+        .theme-toggle-circle {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background-color: var(--text-color-secondary);
+            border-radius: 50%;
+            transition: transform var(--transition-speed-med) ease, background-color var(--transition-speed-med) ease;
+        }
+
+        .dark-theme .theme-toggle-circle {
+            transform: translateX(24px);
+            background-color: var(--accent-color);
+        }
+
+        /*
+        --------------------------------------------------
+        5. PROFILE CARD
+        --------------------------------------------------
+        */
+        #profile-card {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            flex-direction: column;
+            text-align: left;
+            padding: 1.5rem;
+            flex-direction: row;       
+        }
+
+        .profile-image-container {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+        }
+
+        .profile-details {
+            text-align: left;
+            flex-grow: 1;
+            width: 100%;
+            flex-direction: row;
+            width: auto;
+        }
+
+        .profile-readme-container {
+            flex-grow: 1;
+            width: 100%;
+            margin-left: 3rem;
+            margin-right: 2rem;
+        }
+
+        .profile-name {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-color);
+        }
+
+        .profile-login {
+            font-size: 1rem;
+            color: var(--text-color-secondary);
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .profile-bio {
+            margin-bottom: 0rem;
+            text-align: left;
+        }
+        
+        .profile-readme-container {
+            flex-grow: 1;
+            width: 100%;
+            margin-left: 0rem;
+            margin-right: 0rem;
+        }
+
+        #profile-readme {
+            margin-left: 0; 
+            margin-right: 0; 
+            margin-top: 0rem;
+            padding-top: 1rem;
+            border-top: 2px solid var(--bg-color);
+            text-align: left;
+            background: var(--bg-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius-small);
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+            max-width: 100%;
+        }
+        
+        #profile-readme img {
+            max-width: 100%;
+            border-radius: var(--border-radius-small);
+        }
+
+
+        /*
+        --------------------------------------------------
+        6. REPO SECTION & CONTROLS
+        --------------------------------------------------
+        */
+        .repo-section-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .repo-section-header h1 {
+            font-size: 2.5rem;
+        }
+
+        .repo-section-header p {
+            font-size: 1.1rem;
+            color: var(--text-color-secondary);
+            max-width: 600px;
+            margin: 0.5rem auto 0;
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .search-input-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: var(--border-radius-small);
+            background: var(--bg-color);
+            color: var(--text-color-primary);
+            font-size: 1rem;
+            border: none;
+            outline: none;
+            box-shadow: inset 7px 7px 15px var(--shadow-inset-dark), inset -7px -7px 15px var(--shadow-inset-light);
+            transition: box-shadow var(--transition-speed-fast) ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .search-input-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--border-radius-small);
+            padding: 2px;
+            background: linear-gradient(60deg, var(--accent-color), #ff7e5f, #00c6ff, var(--accent-color));
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            z-index: 0;
+            opacity: 0;
+            transition: opacity var(--transition-speed-fast) ease;
+        }
+        
+        .search-input-container:focus-within::before {
+            opacity: 1;
+        }
+
+
+        .language-filter-container {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .language-filter-button {
+            padding: 1rem 1.5rem;
+            background-color: var(--bg-color);
+            border: none;
+            border-radius: var(--border-radius-small);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+            color: var(--text-color-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .language-filter-button:hover {
+            color: var(--accent-color);
+        }
+        
+        .language-filter-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left var(--transition-speed-med) ease;
+        }
+        
+        .language-filter-button:hover::before {
+            left: 100%;
+        }
+
+
+        .language-dropdown {
+            position: absolute;
+            top: 110%;
+            right: 0;
+            width: 300px;
+            background-color: var(--bg-color-container);
+            border-radius: var(--border-radius-small);
+            box-shadow: 9px 9px 18px var(--shadow-dark), -9px -9px 18px var(--shadow-light);
+            z-index: 10;
+            padding: 1rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+        }
+
+        .language-dropdown.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        #language-search {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        #language-list {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .language-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color var(--transition-speed-fast) ease;
+        }
+
+        .language-item:hover {
+            background-color: var(--bg-color);
+        }
+
+        .language-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .active-filters-and-view-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 40px;
+        }
+
+        .active-filter-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-color);
+            color: var(--accent-color);
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            transition: all var(--transition-speed-fast) ease;
+        }
+
+        .remove-filter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background-color: var(--text-color-secondary);
+            color: var(--bg-color-container);
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            line-height: 1;
+            transition: background-color var(--transition-speed-fast) ease;
+        }
+
+        .remove-filter-icon:hover {
+            background-color: var(--color-danger);
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 0.5rem;
+            background-color: var(--bg-color);
+            padding: 0.5rem;
+            border-radius: var(--border-radius-small);
+            box-shadow: inset 4px 4px 8px var(--shadow-inset-dark), inset -4px -4px 8px var(--shadow-inset-light);
+        }
+
+        .control-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: transparent;
+            color: var(--text-color-secondary);
+            font-weight: 600;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+        }
+
+        .control-btn.active {
+            color: var(--accent-color);
+            background-color: var(--bg-color);
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+        
+        /*
+        --------------------------------------------------
+        7. REPOSITORY LIST & CARDS
+        --------------------------------------------------
+        */
+        #repoList {
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: 1fr;
+            justify-items: center; 
+        }
+
+        #repoList.grid-view {
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+
+        .repo-card-link {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-color-container);
+            border-radius: var(--border-radius-small);
+            text-decoration: none;
+            height: 100%;
+            box-shadow: 7px 7px 15px var(--shadow-dark), -7px -7px 15px var(--shadow-light);
+            transition: all var(--transition-speed-med) ease;
+            opacity: 0;
+            transform: translateY(20px);
+            overflow: hidden;
+            position: relative;
+            width: 100%; /* Stretch to fill grid cell */
+            max-width: 450px;
+            min-width: 350px;
+        }
+        
+        /* Softer, smaller gradient hover effect */
+        .has-gradient-hover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), var(--gradient-hover-color), transparent 150px);
+            opacity: 0;
+            transition: opacity var(--transition-speed-med) ease;
+            pointer-events: none;
+            border-radius: inherit; /* Match parent's border radius */
+        }
+
+        .has-gradient-hover:hover::before {
+            opacity: 1;
+        }
+
+
+        .repo-card-link.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .repo-card-link:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
+        }
+
+        .repo-preview-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: var(--bg-color);
+            border-bottom: 2px solid var(--bg-color);
+        }
+        
+        .repo-card-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .repo-name {
+            color: var(--accent-color);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .repo-description {
+            color: var(--text-color-secondary);
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .language-tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .repo-language-tag {
+            background: var(--bg-color);
+            color: var(--text-color-secondary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+            cursor: pointer;
+            transition: all var(--transition-speed-fast) ease;
+        }
+
+        .repo-language-tag:hover {
+            color: var(--accent-color);
+            box-shadow: inset 1px 1px 2px var(--shadow-dark), inset -1px -1px 2px var(--shadow-light);
+        }
+        
+        /*
+        --------------------------------------------------
+        8. CONTACT CARD
+        --------------------------------------------------
+        */
+        #contact-card {
+            text-align: center;
+        }
+        
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .contact-link {
+            display: block;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--bg-color);
+            box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
+            transition: all var(--transition-speed-fast) ease;
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            position: relative;
+            overflow: visible;
+        }
+        
+        .contact-link:hover {
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
+            color: var(--accent-color-hover);
+        }
+        
+        .copy-feedback {
+            position: absolute;
+            bottom: 120%;
+            background-color: var(--text-color-primary);
+            color: var(--bg-color-container);
+            padding: 0.3rem 0.7rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity var(--transition-speed-fast) ease, transform var(--transition-speed-fast) ease;
+            transform: translateY(5px);
+            pointer-events: none;
+        }
+        
+        .copy-feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+
+        /*
+        --------------------------------------------------
+        9. UTILITY & RESPONSIVE STYLES
+        --------------------------------------------------
+        */
+        .hidden { display: none; }
+        
+        .loading-spinner, .errorMessage, #noResults {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-color-secondary);
+        }
+
+        #noResults {
+            margin-left: 0;
+        }
+
+        .errorMessage {
+            color: var(--color-danger);
+            font-weight: 600;
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: var(--border-radius-small);
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; padding-top: calc(var(--nav-height) + 1rem); }
+            .main-container { padding-top: 0; }
+            .nav-content { padding: 0 1rem; flex-wrap: wrap; justify-content: space-between;}
+            .nav-links { order: 2; width: 100%; display: flex; justify-content: center; margin-top: .5rem; }
+            .nav-right { order: 1; }
+            .theme-label { display: none; }
+            .theme-switcher {
+                position: absolute;
+                bottom: 58px;
+                overflow: wrap;
+            }
+            .theme-toggle { top: 40px; align-self: center;}
+            .card { padding: 1.5rem; }
+            .main-container { padding-top: 0; }
+            .nav-content { flex-direction: row-reverse; }
+            .nav-right { order: -1; margin-right: 0; }
+            .nav-links { order: 1; margin-left: 0; justify-content: flex-start; }
+            .nav-links a { padding: 0.5rem; }
+            #profile-card { flex-direction: column; align-items: center; text-align: center; }
+            #profile-name { text-align: center; }
+            #profile-bio { text-align: center; }
+            #profile-login { text-align: center; }
+            #layout-grid-btn, #layout-list-btn, #that-one-span {
+                display: none;
+            }
+            .view-controls {
+                margin: auto;
+            }
+        }
+
+        #that-one-span {
+            border-left: 2px solid var(--shadow-dark); 
+            margin: 0 0.5rem;
+        }
+
+    </style>
+</head>
+<body>
+    <nav class="page-nav">
+        <div class="nav-content">
+            <div class="nav-links">
+                <a href="#profile-card-container">Profile</a>
+                <a href="#repo-section">Projects</a>
+                <a href="#contact-card">Socials</a>
+            </div>
+            <div class="theme-switcher" id="theme-switcher" title="Toggle Theme">
+                <span class="theme-label">Light/Dark Mode</span>
+                <div class="theme-toggle">
+                    <div class="theme-toggle-circle"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="card" id="profile-card-container">
+            <div id="cache-status" class="hidden"></div>
+            <div class="loading-spinner" id="profile-loader"></div>
+            <div id="profile-card" class="hidden">
+            <div class="profile-details">
+                <div class="profile-image-container">
+                    <img id="profile-image" src="blank" alt="GitHub Profile Picture" class="profile-image"/>
+                </div>
+                    <h2 id="profile-name" class="profile-name"></h2>
+                    <p id="profile-login" class="profile-login"></p>
+                    <p id="profile-bio" class="profile-bio"></p>
+            </div>
+                <div class="profile-readme-container">
+                    <div id="profile-readme"></div>
+                </div>
+            </div>
+            <p>This website is mostly AI generated, but once I learn enough my goal is to recreate this website from scratch without any help from AI. </p>
+            <div id="profile-error" class="hidden errorMessage"></div>
+        </div>
+
+        <div class="card" id="repo-section">
+            <div class="repo-section-header">
+                <h1>My GitHub Projects</h1>
+                <p>All of my projects. Use the search bar to search for repos/pages, and filter by programming language</p>
+            </div>
+
+            <div class="controls-container">
+                <div class="search-filter-row">
+                    <div class="search-input-container">
+                        <input type="text" id="searchBar" class="search-input" placeholder="Search by name or description...">
+                    </div>
+                    <div class="language-filter-container">
+                        <button id="language-filter-button" class="language-filter-button has-gradient-hover">Filter</button>
+                        <div id="language-dropdown" class="language-dropdown">
+                            <input type="text" id="language-search" class="search-input" placeholder="Search languages...">
+                            <div id="language-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="active-filters-and-view-controls">
+                    <div id="active-filter-container"></div>
+                    <div class="view-controls">
+                        <button class="control-btn has-gradient-hover" id="sort-name-btn" title="Sort by Name">Name</button>
+                        <button class="control-btn has-gradient-hover" id="sort-created-btn" title="Sort by Date Created">Created</button>
+                        <button class="control-btn active has-gradient-hover" id="sort-updated-btn" title="Sort by Last Push">Updated</button>
+                        <span id="that-one-span"></span>
+                        <button class="control-btn active has-gradient-hover" id="layout-grid-btn" title="Grid View">Grid</button>
+                        <button class="control-btn has-gradient-hover" id="layout-list-btn" title="List View">List</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="repoList" class="grid-view"></div>
+            <div id="loading" class="loading-spinner"></div>
+            <div id="repo-error" class="hidden errorMessage"></div>
+            <p id="noResults" class="hidden">No repositories found matching your criteria.</p>
+        </div>
+        
+        <div class="card" id="contact-card">
+            <h2>My Socials</h2>
+            <p>You can find me on these platforms:</p>
+            <div class="contact-links">
+                <a id="contact-github" href="#" target="_blank" rel="noopener noreferrer" class="contact-link has-gradient-hover" title="GitHub Profile">
+                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24" height="24"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                </a>
+                <a id="contact-linkedin" href="https://www.linkedin.com/in/adrian-melendez-5bab8b36b/" target="_blank" rel="noopener noreferrer" class="contact-link has-gradient-hover" title="LinkedIn">
+                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24" height="24"><title>LinkedIn</title><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+                </a>
+                <a id="contact-email" href="mailto:adrianmelendez200812@gmail.com" class="contact-link has-gradient-hover" title="Email">
+                    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" width="24" height="24"><title>Email</title><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg>
+                </a>
+                <a id="contact-discord" href="#" class="contact-link has-gradient-hover" title="Copy Discord ID">
+                    <div class="copy-feedback">Copied!</div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="50" fill="currentColor" class="bi bi-discord" viewBox="0 0 16 16">
+                    <path d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612"/></svg>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const GITHUB_USERNAME = 'Exqueeseme';
+        
+        const LANGUAGE_COLORS = {
+            "JavaScript": "#f1e05a", "HTML": "#e34c26", "CSS": "#563d7c", "Python": "#3572A5",
+            "Java": "#b07219", "TypeScript": "#2b7489", "Shell": "#89e051", "C++": "#f34b7d",
+            "C": "#555555", "PHP": "#4F5D95", "Ruby": "#701516", "Go": "#00ADD8", "Swift": "#ffac45",
+            "Kotlin": "#F18E33", "Rust": "#dea584", "Dart": "#00B4AB", "Other": "#ededed"
+        };
+
+        const CACHE_KEYS = {
+            PROFILE: 'github_profile_cache',
+            REPOS: 'github_repos_cache',
+            TIMESTAMP: 'github_cache_timestamp',
+            PROFILE_README: 'github_profile_readme_cache'
+        };
+
+        // --- DOM ELEMENT CACHE ---
+        const dom = {
+            themeSwitcher: document.getElementById('theme-switcher'),
+            cacheStatus: document.getElementById('cache-status'),
+            profileLoader: document.getElementById('profile-loader'),
+            profileCard: document.getElementById('profile-card'),
+            profileError: document.getElementById('profile-error'),
+            profileImage: document.getElementById('profile-image'),
+            profileName: document.getElementById('profile-name'),
+            profileLogin: document.getElementById('profile-login'),
+            profileBio: document.getElementById('profile-bio'),
+            profileReadme: document.getElementById('profile-readme'),
+            searchBar: document.getElementById('searchBar'),
+            langFilterBtn: document.getElementById('language-filter-button'),
+            langDropdown: document.getElementById('language-dropdown'),
+            langSearch: document.getElementById('language-search'),
+            langList: document.getElementById('language-list'),
+            repoList: document.getElementById('repoList'),
+            loadingSpinner: document.getElementById('loading'),
+            repoError: document.getElementById('repo-error'),
+            noResults: document.getElementById('noResults'),
+            contactGithub: document.getElementById('contact-github'),
+            contactDiscord: document.getElementById('contact-discord'),
+            sortNameBtn: document.getElementById('sort-name-btn'),
+            sortCreatedBtn: document.getElementById('sort-created-btn'),
+            sortUpdatedBtn: document.getElementById('sort-updated-btn'),
+            layoutGridBtn: document.getElementById('layout-grid-btn'),
+            layoutListBtn: document.getElementById('layout-list-btn'),
+            activeFilterContainer: document.getElementById('active-filter-container'),
+            navLinks: document.querySelectorAll('.nav-links a')
+        };
+
+        // --- APPLICATION STATE ---
+        let state = {
+            allRepos: [],
+            activeLangFilter: null,
+            currentSort: 'updated',
+            currentLayout: 'grid'
+        };
+
+        // --- CACHE HELPERS ---
+        function setCache(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+            } catch (e) {
+                console.error('Failed to save to cache:', e);
+            }
+        }
+
+        function getCache(key) {
+            try {
+                const value = localStorage.getItem(key);
+                return value ? JSON.parse(value) : null;
+            } catch (e) {
+                console.error('Failed to read from cache:', e);
+                localStorage.removeItem(key); // Remove corrupted item on parsing error
+                return null;
+            }
+        }
+
+        // --- API & DATA FETCHING ---
+        async function fetchGitHubAPI(url, options = {}, isJson = true) {
+            const response = await fetch(url, options);
+            if (response.status === 403 || response.status === 429) {
+                const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+                if (rateLimitRemaining === '0') {
+                    const resetTime = new Date(parseInt(response.headers.get('X-RateLimit-Reset')) * 1000);
+                    const minutesToWait = Math.max(1, Math.ceil((resetTime - new Date()) / 60000));
+                    throw new Error(`GitHub API rate limit exceeded. Please wait ~${minutesToWait} minute(s).`);
+                }
+            }
+            if (!response.ok) throw new Error(`API Error: ${response.statusText} (${response.status})`);
+            return isJson ? response.json() : response.text();
+        }
+
+        async function fetchAndProcessAllRepos() {
+            const repos = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}/repos?per_page=100`);
+            
+            const processedRepos = await Promise.all(repos.map(async (repo) => {
+                repo.linkUrl = repo.has_pages ? `https://${GITHUB_USERNAME.toLowerCase()}.github.io/${repo.name}/` : repo.html_url;
+
+                try {
+                    const languages = await fetchGitHubAPI(repo.languages_url);
+                    repo.all_languages = Object.keys(languages);
+                } catch (e) { repo.all_languages = repo.language ? [repo.language] : []; }
+
+                if (!repo.has_pages) {
+                    try {
+                        const readmeContent = await fetchGitHubAPI(repo.url + '/readme');
+                        const decodedContent = atob(readmeContent.content);
+                        if (repo.language !== 'HTML' && repo.language !== 'CSS') {
+                            const firstImageMatch = decodedContent.match(/!\[.*?\]\((.*?)\)/);
+                            let imgUrl = firstImageMatch ? firstImageMatch[1] : null;
+                            if (imgUrl) {
+                                if (!/^https?:\/\//i.test(imgUrl)) {
+                                    const branch = repo.default_branch || 'main';
+                                    imgUrl = imgUrl.replace(/^\.\//, '').replace(/^\/+/, '');
+                                    imgUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${repo.name}/${branch}/${imgUrl}`;
+                                }
+                                repo.previewImageUrl = imgUrl;
+                            }
+                        }
+                    } catch (e) { repo.previewImageUrl = null; }
+                }
+                return repo;
+            }));
+            return processedRepos;
+        }
+
+        async function fetchProfileReadme() {
+            try {
+                const readmeHtml = await fetchGitHubAPI(
+                    `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_USERNAME}/readme`,
+                    { headers: { 'Accept': 'application/vnd.github.html' } },
+                    false
+                );
+                dom.profileReadme.innerHTML = readmeHtml;
+                setCache(CACHE_KEYS.PROFILE_README, readmeHtml); // Save to cache
+            } catch (e) {
+                // Try to load from cache if API fails
+                const cachedReadme = getCache(CACHE_KEYS.PROFILE_README);
+                if (cachedReadme) {
+                    dom.profileReadme.innerHTML = cachedReadme;
+                } else {
+                    dom.profileReadme.innerHTML = '<p>This user does not have a profile README.</p>';
+                }
+            }
+        }
+
+        // --- UI RENDERING ---
+
+        function renderProfile(user) {
+            dom.profileImage.src = user.avatar_url;
+            dom.profileName.textContent = user.name || user.login;
+            dom.profileLogin.textContent = `@${user.login}`;
+            dom.profileBio.textContent = user.bio || 'No bio provided.';
+            dom.contactGithub.href = user.html_url;
+            dom.profileCard.classList.remove('hidden');
+        }
+
+        function renderLanguageList() {
+            const searchTerm = dom.langSearch.value.toLowerCase();
+            const allLangs = new Set(state.allRepos.flatMap(r => r.all_languages).filter(Boolean));
+            const filteredLangs = [...allLangs].filter(lang => lang.toLowerCase().includes(searchTerm)).sort();
+            
+            dom.langList.innerHTML = '';
+            filteredLangs.forEach(lang => {
+                const item = document.createElement('div');
+                item.className = 'language-item has-gradient-hover';
+                item.onclick = () => { state.activeLangFilter = lang; dom.langDropdown.classList.remove('open'); updateAndDisplay(); };
+                
+                const dot = document.createElement('div');
+                dot.className = 'language-color-dot';
+                dot.style.backgroundColor = LANGUAGE_COLORS[lang] || LANGUAGE_COLORS['Other'];
+                
+                const name = document.createElement('span');
+                name.textContent = lang;
+                
+                item.append(dot, name);
+                dom.langList.appendChild(item);
+            });
+        }
+
+        function displayRepositories(repos) {
+            dom.repoList.innerHTML = '';
+            dom.noResults.classList.toggle('hidden', repos.length > 0);
+            
+            repos.forEach((repo, index) => {
+                const cardLink = document.createElement('a');
+                cardLink.className = 'repo-card-link has-gradient-hover';
+                cardLink.href = repo.linkUrl;
+                cardLink.target = '_blank';
+                cardLink.rel = 'noopener noreferrer';
+
+                let previewImageUrl;
+                if (repo.has_pages) {
+                    previewImageUrl = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(repo.linkUrl)}?w=600&h=400`;
+                } else if (repo.previewImageUrl) {
+                    previewImageUrl = repo.previewImageUrl;
+                } else {
+                    const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim().substring(1);
+                    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color-primary').trim().substring(1);
+                    previewImageUrl = `https://placehold.co/600x400/${bgColor}/${textColor}?text=No+Preview&font=inter`;
+                }
+
+                cardLink.innerHTML = `
+                    <img src="${previewImageUrl}" alt="${repo.name} preview" class="repo-preview-image" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/600x400/e4e4f1/3a3a5a?text=Preview+Error&font=inter';">
+                    <div class="repo-card-content">
+                        <h3 class="repo-name">${repo.name}</h3>
+                        <p class="repo-description">${repo.description || 'No description.'}</p>
+                        <div class="language-tags-container">
+                            ${(repo.all_languages && repo.all_languages.length > 0) ? repo.all_languages.map(lang => `<span class="repo-language-tag" data-lang="${lang}">${lang}</span>`).join('') : ''}
+                        </div>
+                    </div>
+                `;
+                dom.repoList.appendChild(cardLink);
+                setTimeout(() => cardLink.classList.add('show'), index * 50);
+            });
+        }
+        
+        function updateAndDisplay() {
+            if (!state.allRepos) return;
+            
+            const searchTerm = dom.searchBar.value.toLowerCase();
+            let filteredRepos = state.allRepos.filter(repo =>
+                (searchTerm === '' || repo.name.toLowerCase().includes(searchTerm) || (repo.description && repo.description.toLowerCase().includes(searchTerm))) &&
+                (!state.activeLangFilter || (repo.all_languages && repo.all_languages.includes(state.activeLangFilter)))
+            );
+
+            if (state.currentSort === 'name') filteredRepos.sort((a, b) => a.name.localeCompare(b.name));
+            else if (state.currentSort === 'created') filteredRepos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            else filteredRepos.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
+
+            displayActiveFilter();
+            updateControlButtons();
+            displayRepositories(filteredRepos);
+        }
+
+        function displayActiveFilter() {
+            dom.activeFilterContainer.innerHTML = '';
+            if (!state.activeLangFilter) return;
+            
+            const tag = document.createElement('div');
+            tag.className = 'active-filter-tag';
+            tag.textContent = state.activeLangFilter;
+            
+            const remove = document.createElement('span');
+            remove.className = 'remove-filter-icon';
+            remove.innerHTML = `&times;`;
+            remove.onclick = (e) => { e.stopPropagation(); state.activeLangFilter = null; updateAndDisplay(); };
+            
+            tag.appendChild(remove);
+            dom.activeFilterContainer.appendChild(tag);
+        }
+
+        function updateControlButtons() {
+            ['name', 'created', 'updated'].forEach(s => {
+                const btnKey = `sort${s.charAt(0).toUpperCase() + s.slice(1)}Btn`;
+                dom[btnKey]?.classList.toggle('active', state.currentSort === s);
+            });
+            ['grid', 'list'].forEach(l => {
+                const btnKey = `layout${l.charAt(0).toUpperCase() + l.slice(1)}Btn`;
+                dom[btnKey]?.classList.toggle('active', state.currentLayout === l);
+            });
+            dom.repoList.className = state.currentLayout === 'grid' ? 'grid-view' : 'list-view';
+        }
+        
+        // --- EVENT HANDLERS & INITIALIZATION ---
+        
+        function setSort(type) { state.currentSort = type; updateAndDisplay(); }
+        function setLayout(type) { state.currentLayout = type; updateAndDisplay(); }
+
+        function handleThemeToggle() {
+            const isDark = document.documentElement.classList.toggle('dark-theme');
+            document.documentElement.classList.toggle('light-theme', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateAndDisplay();
+        }
+
+        function toggleLanguageDropdown() {
+            dom.langDropdown.classList.toggle('open');
+            if (dom.langDropdown.classList.contains('open')) dom.langSearch.focus();
+        }
+        
+        function displayCacheMessage(isoTimestamp) {
+            const date = new Date(isoTimestamp);
+            dom.cacheStatus.innerHTML = `API limit likely reached. Showing cached data from ${date.toLocaleString()}.`;
+            dom.cacheStatus.classList.remove('hidden');
+        }
+
+        function displayFatalError(error) {
+            const errorText = `Could not load data: ${error.message}. No cached version available.`;
+            dom.profileError.textContent = errorText;
+            dom.repoError.textContent = errorText;
+            dom.profileError.classList.remove('hidden');
+            dom.repoError.classList.remove('hidden');
+        }
+
+        function renderPageFromData(profileData, reposData) {
+            renderProfile(profileData);
+            fetchProfileReadme(); // This now handles cache fallback
+            state.allRepos = reposData;
+            renderLanguageList();
+            updateAndDisplay();
+        }
+        
+        async function initializePage() {
+            try {
+                // Try to fetch fresh data first
+                console.log("Attempting to fetch fresh data from GitHub...");
+                const profileData = await fetchGitHubAPI(`https://api.github.com/users/${GITHUB_USERNAME}`);
+                const reposData = await fetchAndProcessAllRepos();
+                
+                renderPageFromData(profileData, reposData);
+                setCache(CACHE_KEYS.PROFILE, profileData);
+                setCache(CACHE_KEYS.REPOS, reposData);
+                setCache(CACHE_KEYS.TIMESTAMP, new Date().toISOString());
+                // README is cached inside fetchProfileReadme
+                console.log("Fresh data loaded and cached successfully.");
+
+            } catch (error) {
+                console.warn("Failed to fetch fresh data:", error.message);
+                console.log("Attempting to load data from cache...");
+
+                const cachedProfile = getCache(CACHE_KEYS.PROFILE);
+                const cachedRepos = getCache(CACHE_KEYS.REPOS);
+                const cachedReadme = getCache(CACHE_KEYS.PROFILE_README);
+                if (cachedProfile && cachedRepos) {
+                    renderProfile(cachedProfile);
+                    dom.profileReadme.innerHTML = cachedReadme || '<p>This user does not have a profile README.</p>';
+                    state.allRepos = cachedRepos;
+                    renderLanguageList();
+                    updateAndDisplay();
+                    const cachedTimestamp = getCache(CACHE_KEYS.TIMESTAMP);
+                    displayCacheMessage(cachedTimestamp);
+                } else {
+                    displayFatalError(error);
+                }
+            } finally {
+                dom.profileLoader.classList.add('hidden');
+                dom.loadingSpinner.classList.add('hidden');
+            }
+        }
+        
+        function init() {
+            // Set theme from localStorage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.className = `${savedTheme}-theme`;
+
+            // --- Event Listeners ---
+            dom.themeSwitcher.addEventListener('click', handleThemeToggle);
+            dom.searchBar.addEventListener('input', () => updateAndDisplay());
+            dom.langFilterBtn.addEventListener('click', toggleLanguageDropdown);
+            dom.langSearch.addEventListener('input', renderLanguageList);
+            
+            document.addEventListener('click', e => { 
+                if (!dom.langDropdown.contains(e.target) && !dom.langFilterBtn.contains(e.target)) {
+                    dom.langDropdown.classList.remove('open');
+                }
+            });
+
+            dom.sortNameBtn.addEventListener('click', () => setSort('name'));
+            dom.sortCreatedBtn.addEventListener('click', () => setSort('created'));
+            dom.sortUpdatedBtn.addEventListener('click', () => setSort('updated'));
+            dom.layoutGridBtn.addEventListener('click', () => setLayout('grid'));
+            dom.layoutListBtn.addEventListener('click', () => setLayout('list'));
+            
+            dom.repoList.addEventListener('click', e => {
+                if (e.target.classList.contains('repo-language-tag')) {
+                    e.preventDefault(); e.stopPropagation();
+                    state.activeLangFilter = e.target.dataset.lang;
+                    updateAndDisplay();
+                    document.getElementById('repo-section').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+
+            document.body.addEventListener('mousemove', e => {
+                const hoverElement = e.target.closest('.has-gradient-hover');
+                if (hoverElement) {
+                    const rect = hoverElement.getBoundingClientRect();
+                    hoverElement.style.setProperty('--x', `${e.clientX - rect.left}px`);
+                    hoverElement.style.setProperty('--y', `${e.clientY - rect.top}px`);
+                }
+            });
+            
+            dom.contactDiscord.addEventListener('click', (e) => {
+                e.preventDefault();
+                const textArea = document.createElement("textarea");
+                textArea.value = 'AJelTaco';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const feedback = e.currentTarget.querySelector('.copy-feedback');
+                    feedback.classList.add('show');
+                    setTimeout(() => feedback.classList.remove('show'), 1500);
+                } catch (err) { console.error('Fallback: Oops, unable to copy', err); }
+                document.body.removeChild(textArea);
+            });
+
+            dom.navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    document.querySelector(targetId)?.scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            // --- Load Initial Data ---
+            initializePage();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
