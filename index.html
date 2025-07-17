@@ -604,6 +604,7 @@
             display: grid;
             gap: 2rem;
             grid-template-columns: 1fr;
+            justify-items: center; 
         }
 
         #repoList.grid-view {
@@ -623,6 +624,9 @@
             transform: translateY(20px);
             overflow: hidden;
             position: relative;
+            width: 100%; /* Stretch to fill grid cell */
+            max-width: 450px;
+            min-width: 350px;
         }
         
         /* Softer, smaller gradient hover effect */
@@ -948,7 +952,8 @@
         const CACHE_KEYS = {
             PROFILE: 'github_profile_cache',
             REPOS: 'github_repos_cache',
-            TIMESTAMP: 'github_cache_timestamp'
+            TIMESTAMP: 'github_cache_timestamp',
+            PROFILE_README: 'github_profile_readme_cache'
         };
 
         // --- DOM ELEMENT CACHE ---
@@ -1062,11 +1067,21 @@
 
         async function fetchProfileReadme() {
             try {
-                const readmeHtml = await fetchGitHubAPI(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_USERNAME}/readme`, { headers: { 'Accept': 'application/vnd.github.html' } }, false);
+                const readmeHtml = await fetchGitHubAPI(
+                    `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_USERNAME}/readme`,
+                    { headers: { 'Accept': 'application/vnd.github.html' } },
+                    false
+                );
                 dom.profileReadme.innerHTML = readmeHtml;
+                setCache(CACHE_KEYS.PROFILE_README, readmeHtml); // Save to cache
             } catch (e) {
-                console.warn("Could not fetch profile README.", e);
-                dom.profileReadme.innerHTML = '<p>This user does not have a profile README.</p>';
+                // Try to load from cache if API fails
+                const cachedReadme = getCache(CACHE_KEYS.PROFILE_README);
+                if (cachedReadme) {
+                    dom.profileReadme.innerHTML = cachedReadme;
+                } else {
+                    dom.profileReadme.innerHTML = '<p>This user does not have a profile README.</p>';
+                }
             }
         }
 
@@ -1220,12 +1235,9 @@
         }
 
         function renderPageFromData(profileData, reposData) {
-            // Render profile and repos
             renderProfile(profileData);
-            fetchProfileReadme(); // Fetch live README regardless
+            fetchProfileReadme(); // This now handles cache fallback
             state.allRepos = reposData;
-            
-            // Initialize repo filters and display
             renderLanguageList();
             updateAndDisplay();
         }
@@ -1241,6 +1253,7 @@
                 setCache(CACHE_KEYS.PROFILE, profileData);
                 setCache(CACHE_KEYS.REPOS, reposData);
                 setCache(CACHE_KEYS.TIMESTAMP, new Date().toISOString());
+                // README is cached inside fetchProfileReadme
                 console.log("Fresh data loaded and cached successfully.");
 
             } catch (error) {
@@ -1249,15 +1262,17 @@
 
                 const cachedProfile = getCache(CACHE_KEYS.PROFILE);
                 const cachedRepos = getCache(CACHE_KEYS.REPOS);
-
+                const cachedReadme = getCache(CACHE_KEYS.PROFILE_README);
                 if (cachedProfile && cachedRepos) {
-                    renderPageFromData(cachedProfile, cachedRepos);
+                    renderProfile(cachedProfile);
+                    dom.profileReadme.innerHTML = cachedReadme || '<p>This user does not have a profile README.</p>';
+                    state.allRepos = cachedRepos;
+                    renderLanguageList();
+                    updateAndDisplay();
                     const cachedTimestamp = getCache(CACHE_KEYS.TIMESTAMP);
                     displayCacheMessage(cachedTimestamp);
-                    console.log("Successfully loaded data from cache.");
                 } else {
                     displayFatalError(error);
-                    console.error("Failed to load data and no cache is available.");
                 }
             } finally {
                 dom.profileLoader.classList.add('hidden');
